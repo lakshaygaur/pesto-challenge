@@ -4,6 +4,7 @@ import (
 	"fmt"
 	jwt "pesto-auth/authorization"
 	"pesto-auth/config"
+	"pesto-auth/database"
 	"pesto-auth/log"
 	"pesto-auth/server"
 )
@@ -16,5 +17,7 @@ func main() {
 	fmt.Println("config", config.Cfg)
 	log.Logger.Debug("Logger setup complete")
 	jwt.Init(config.Cfg.JWT)
+	database.Init()
+	defer database.HandleDBclose()
 	server.StartServer(config.Cfg.Server)
 }

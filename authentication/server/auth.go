@@ -4,13 +4,29 @@ import (
 	"fmt"
 	jwt "pesto-auth/authorization"
 	"pesto-auth/log"
+	"pesto-auth/user"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
 func SignUp(c *gin.Context) {
-	var user jwt.User
+	pass, err := jwt.GenerateHashPassword("mystrongpass")
+	if err != nil {
+		log.Logger.Error("Failed generating password : ", zap.Error(err))
+	}
+	var user = user.User{
+		Id:       uuid.NewString(),
+		Name:     "Test",
+		Email:    "test@example.com",
+		Password: pass,
+		Country:  "India",
+		Phone:    "+91-989749834",
+	}
+	fmt.Println("user in auth ", user)
+	user.StoreUser()
+	// var user user.User
 	if c.ShouldBind(&user) != nil {
 		log.Logger.Error("bind failed")
 	}
@@ -23,7 +39,7 @@ func SignUp(c *gin.Context) {
 	fmt.Println("Token Created : ", token)
 	c.JSON(200, gin.H{
 		"success": true,
-		"token":   "<enter token here>",
+		"token":   token,
 	})
 }
 
@@ -41,6 +57,7 @@ func Login(c *gin.Context) {
 }
 
 func User(c *gin.Context) {
+
 	c.JSON(200, gin.H{
 		"success": true,
 		"token":   "<enter token here>",

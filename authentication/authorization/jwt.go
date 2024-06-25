@@ -2,17 +2,10 @@ package jwt
 
 import (
 	"fmt"
+	"pesto-auth/user"
 
 	"github.com/golang-jwt/jwt"
 )
-
-type User struct {
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	Country string `json:"country"`
-	Phone   string `json:"phone"`
-	jwt.StandardClaims
-}
 
 var secretKey []byte
 var EXPIRY int
@@ -22,7 +15,7 @@ func Init(cfg Config) {
 	EXPIRY = cfg.Expiry
 }
 
-func CreateToken(user User) (string, error) {
+func CreateToken(user user.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		user)
 
@@ -34,11 +27,11 @@ func CreateToken(user User) (string, error) {
 	return tokenString, nil
 }
 
-func Verify(tokenString string) (*User, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &User{}, func(token *jwt.Token) (interface{}, error) {
+func Verify(tokenString string) (*user.User, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &user.User{}, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
-	user := token.Claims.(*User)
+	user := token.Claims.(*user.User)
 	if err != nil {
 		return nil, err
 	}

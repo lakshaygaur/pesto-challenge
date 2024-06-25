@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"fmt"
+	"pesto-auth/user"
 	"testing"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 )
 
 func TestCreateToken(t *testing.T) {
-	var user = User{
+	var user = user.User{
 		Name:    "Test",
 		Email:   "test@example.com",
 		Country: "India",
