@@ -1,10 +1,11 @@
 package server
 
 import (
-	"fmt"
+	"net/http"
 	jwt "pesto-auth/authorization"
 	"pesto-auth/log"
 	"pesto-auth/user"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -12,31 +13,36 @@ import (
 )
 
 func SignUp(c *gin.Context) {
-	pass, err := jwt.GenerateHashPassword("mystrongpass")
+	var user user.User
+	if c.ShouldBind(&user) != nil {
+		log.Logger.Error("failed binding user : ")
+		return
+	}
+	pass, err := jwt.GenerateHashPassword(user.Password)
 	if err != nil {
 		log.Logger.Error("Failed generating password : ", zap.Error(err))
+		return
 	}
-	var user = user.User{
-		Id:       uuid.NewString(),
-		Name:     "Test",
-		Email:    "test@example.com",
-		Password: pass,
-		Country:  "India",
-		Phone:    "+91-989749834",
-	}
-	fmt.Println("user in auth ", user)
-	user.StoreUser()
-	// var user user.User
-	if c.ShouldBind(&user) != nil {
-		log.Logger.Error("bind failed")
-	}
+	user.Password = pass
+	user.Id = uuid.NewString()
 	log.Logger.Debug("User details for signup ", zap.Any("user", user))
 	token, err := jwt.CreateToken(user)
 	if err != nil {
 		log.Logger.Error("Failed creating token : ", zap.String("error", err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"msg":     "Failed adding user details. Please contact support.",
+		})
+		return
 	}
-	// log.Logger.Debug("Token Created : ", token)
-	fmt.Println("Token Created : ", token)
+	err = user.StoreUser()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"msg":     "Failed adding user details. Please contact support.",
+		})
+		return
+	}
 	c.JSON(200, gin.H{
 		"success": true,
 		"token":   token,
@@ -44,22 +50,91 @@ func SignUp(c *gin.Context) {
 }
 
 func Login(c *gin.Context) {
-	// var token string
-	// if c.ShouldBind(&string) != nil {
-	// 	log.Logger.Error("bind failed")
-	// }
-	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiVGVzdCIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsImNvdW50cnkiOiJJbmRpYSIsInBob25lIjoiSW5kaWEiLCJleHAiOjE3MTkyNTcyMjksImlhdCI6MTcxOTI1NjMyOX0.D5UfmtkoUjGTyjdIBcWMcYCHrajpdTu1mEHcTLSQzGI"
+	var reqUsr user.User
+	if c.ShouldBind(&reqUsr) != nil {
+		log.Logger.Error("bind failed")
+	}
+	// match passwords
+	tempPass := reqUsr.Password
+	reqUsr.GetUser()
+	ok := jwt.CheckPasswordHash(tempPass, reqUsr.Password)
+	if !ok {
+		c.JSON(200, gin.H{
+			"success": false,
+			"msg":     "Invalid email/password",
+		})
+		return
+	}
+	// generate token
+	token, err := jwt.CreateToken(reqUsr)
+	if err != nil {
+		log.Logger.Error("Failed creating token : ", zap.String("error", err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"msg":     "Failed adding user details. Please contact support.",
+		})
+		return
+	}
+	// return token
 	jwt.Verify(token)
 	c.JSON(200, gin.H{
 		"success": true,
-		"token":   "<enter token here>",
+		"token":   token,
+	})
+}
+
+func RefreshToken(c *gin.Context) {
+	// parse token
+
+	// check if the token has expired; reject request if it is expired
+
+	// generate new token with more time
+
+	c.JSON(200, gin.H{
+		"success": true,
+		"token":   "<>",
 	})
 }
 
 func User(c *gin.Context) {
+	// check if token is valid
+	authorization := c.GetHeader("Authorization")
+	// Check if the Authorization header has the correct format (Bearer <token>)
+	token := strings.Split(authorization, " ")
+	if len(token) != 2 || token[0] != "Bearer" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format"})
+		c.Abort()
+		return
+	}
+	user, err := jwt.Verify(token[1])
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"msg":     "Failed verifying token",
+		})
+		c.Abort()
+		return
+	}
+	// get details from DB
+	err = user.GetUser()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"msg":     "Failed getting user details",
+		})
+		c.Abort()
+		return
+	}
+	// build response object
+	resp := make(map[string]string)
+	resp["name"] = user.Name
+	resp["email"] = user.Email
+	resp["id"] = user.Id
+	resp["country"] = user.Country
+	resp["phone"] = user.Phone
 
 	c.JSON(200, gin.H{
 		"success": true,
-		"token":   "<enter token here>",
+		"user":    resp,
 	})
 }

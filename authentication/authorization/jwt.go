@@ -1,10 +1,10 @@
 package jwt
 
 import (
-	"fmt"
 	"pesto-auth/user"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/pkg/errors"
 )
 
 var secretKey []byte
@@ -18,7 +18,8 @@ func Init(cfg Config) {
 func CreateToken(user user.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		user)
-
+	// add expiry
+	// ---- here ----
 	tokenString, err := token.SignedString(secretKey)
 	if err != nil {
 		return "", err
@@ -36,7 +37,7 @@ func Verify(tokenString string) (*user.User, error) {
 		return nil, err
 	}
 	if !token.Valid {
-		return nil, fmt.Errorf("invalid token")
+		return nil, errors.New("invalid token")
 	}
 
 	return user, nil
