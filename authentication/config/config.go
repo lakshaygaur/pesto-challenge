@@ -23,7 +23,6 @@ var Cfg Config
 func SetConfig() {
 	viper.SetConfigName("config") // name of config file (without extension)
 	viper.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
-	fmt.Println("config path", os.Getenv("AUTH_CONFIG_YAML"))
 	viper.AddConfigPath(os.Getenv("AUTH_CONFIG_YAML"))
 	// viper.AddConfigPath(DEFAULT_CONFIG_PATH) // path to look for the config file in
 	// viper.AddConfigPath(".")                 // optionally look for config in the working directory

@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"fmt"
 	"pesto-auth/database"
 	"pesto-auth/log"
 
@@ -45,7 +44,6 @@ func (user *User) GetUser() error {
 		return err
 	}
 	// set user
-	fmt.Println("before Scanning data", user)
 	for data.Next() {
 		err = data.Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.Country, &user.Phone)
 		if err != nil {
@@ -53,7 +51,6 @@ func (user *User) GetUser() error {
 			return err
 		}
 	}
-	fmt.Println("After Scanning data", user)
 	log.Logger.Debug("User details scanned : ", zap.Any("user", user))
 	return nil
 }

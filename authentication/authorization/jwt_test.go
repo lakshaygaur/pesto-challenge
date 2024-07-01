@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"encoding/json"
 	"fmt"
 	"pesto-auth/user"
 	"testing"
@@ -26,9 +27,18 @@ func TestCreateToken(t *testing.T) {
 			t.Errorf("Failed creating token %q", err)
 		}
 		fmt.Println("Token created : ", token)
-		got, err := Verify(token)
+		tokenMap, err := Verify(token)
 		if err != nil {
 			t.Errorf("Failed verifying token %q", err)
+		}
+		jsonbody, err := json.Marshal(tokenMap["user"])
+		if err != nil {
+			t.Errorf("Failed parsing token %q", err)
+		}
+		got := user.User{}
+		err = json.Unmarshal(jsonbody, &got)
+		if err != nil {
+			t.Errorf("Failed unmarshaling token %q", err)
 		}
 		want := "Test"
 		if got.Name != want {

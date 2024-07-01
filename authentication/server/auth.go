@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 	jwt "pesto-auth/authorization"
 	"pesto-auth/log"
@@ -106,8 +107,9 @@ func User(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	user, err := jwt.Verify(token[1])
+	tokenMap, err := jwt.Verify(token[1])
 	if err != nil {
+		log.Logger.Error("Failed verifying token", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"msg":     "Failed verifying token",
@@ -115,6 +117,28 @@ func User(c *gin.Context) {
 		c.Abort()
 		return
 	}
+
+	jsonbody, err := json.Marshal(tokenMap["user"])
+	if err != nil {
+		log.Logger.Error("Failed parsing token", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"msg":     "Failed parsing token",
+		})
+		c.Abort()
+		return
+	}
+	user := user.User{}
+	if err := json.Unmarshal(jsonbody, &user); err != nil {
+		log.Logger.Error("Failed parsing token", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"msg":     "Failed parsing token",
+		})
+		c.Abort()
+		return
+	}
+
 	// get details from DB
 	err = user.GetUser()
 	if err != nil {

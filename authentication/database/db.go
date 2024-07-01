@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"pesto-auth/log"
+	"time"
 
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
@@ -10,8 +11,8 @@ import (
 
 var DB *sql.DB
 
-func Init() {
-	connStr := "postgresql://pesto:pest02024@localhost:5432/pesto?sslmode=disable"
+func Init(cfg Config) {
+	connStr := "postgresql://" + cfg.User + ":" + cfg.Password + "@" + cfg.Host + "/" + cfg.DBname + "?sslmode=disable"
 	// Connect to database
 	var err error
 	DB, err = sql.Open("postgres", connStr)
@@ -34,5 +35,9 @@ func RunMigrations() {
 	password VARCHAR(200) NULL, country VARCHAR(64) NULL, phone VARCHAR(20) NULL)`)
 	if err != nil {
 		log.Logger.Error("Failed running migrations : ", zap.Any("error", err))
+		log.Logger.Info("Trying to run migrations again in 2 secs...")
+		time.Sleep(2 * time.Second)
+		RunMigrations()
 	}
+	log.Logger.Info("Migrations ran successfully")
 }

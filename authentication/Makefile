@@ -6,9 +6,9 @@ compile:
 	GOOS=linux GOARCH=386 go build -o bin/main-linux-386 main.go
 	GOOS=windows GOARCH=386 go build -o bin/main-windows-386 main.go
 
-build:
+run-build:
 	echo "Building bin"
-	go build -o build/
+	go build -o build/authentication cmd/main.go
 
 clean:
 	rm -rf build
