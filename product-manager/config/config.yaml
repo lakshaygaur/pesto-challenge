@@ -7,7 +7,4 @@ database:
   host: localhost:5432
   user: pesto
   password: pest02024
-  dbName: pesto_auth
-jwt: 
-  secret: Unbr#@kab!E
-  expiry: 3
+  dbName: pesto_products
