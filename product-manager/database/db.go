@@ -30,9 +30,10 @@ func HandleDBclose() int {
 }
 
 func RunMigrations() {
-	_, err := DB.Query(`CREATE TABLE IF NOT EXISTS users 
-	(id UUID PRIMARY KEY, name VARCHAR(200) NULL,	email VARCHAR(200) NULL,
-	password VARCHAR(200) NULL, country VARCHAR(64) NULL, phone VARCHAR(20) NULL)`)
+	_, err := DB.Query(`CREATE TABLE IF NOT EXISTS products
+	 (id UUID PRIMARY KEY, name VARCHAR(200) NULL,	category VARCHAR(100) NULL,
+	 manufacturer VARCHAR(200) NULL, description VARCHAR(200) NULL, price FLOAT NULL, 
+	 origin VARCHAR(64) NULL, last_updated DATETIME NULL, created_at DATETIME NULL)`)
 	if err != nil {
 		log.Logger.Error("Failed running migrations : ", zap.Any("error", err))
 		log.Logger.Info("Trying to run migrations again in 2 secs...")
